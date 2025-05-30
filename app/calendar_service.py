@@ -1,17 +1,15 @@
-from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 from flask import current_app
+from google.oauth2.credentials import Credentials # Add this import
 
-def build_calendar_service():
-    credentials = service_account.Credentials.from_service_account_file(
-        current_app.config["SERVICE_ACCOUNT_FILE"],
-        scopes=current_app.config["GOOGLE_CALENDAR_SCOPES"]
-    )
-    return build("calendar", "v3", credentials=credentials)
+# ... other imports ...
 
-def create_calendar_event(date_info: dict):
-    calendar_id = current_app.config["GOOGLE_CALENDAR_ID"]
+def build_user_calendar_service(user_creds: Credentials): # Changed type hint
+    return build("calendar", "v3", credentials=user_creds)
+
+def create_calendar_event(date_info: dict, user_creds: Credentials):
+    calendar_id = "primary"
     timezone = current_app.config["TIMEZONE"]
 
     year = int(date_info["year"])
@@ -30,7 +28,7 @@ def create_calendar_event(date_info: dict):
         "end": {"dateTime": end_dt.isoformat(), "timeZone": timezone}
     }
 
-    service = build_calendar_service()
+    service = build_user_calendar_service(user_creds)
     created_event = service.events().insert(calendarId=calendar_id, body=event).execute()
     
     print("Event created:", created_event)
